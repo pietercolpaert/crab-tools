@@ -21,9 +21,18 @@ Wait for ~4hours (on a machine with 4 cores and an SSD)
 
 Load the DBF (the data files) in the postgresql db:
 
-First change them to csv using your favourite tool (a proprietery perl file in the bin/ folder of this repo may help)
+First change them to csv using your favourite tool (a perl file in the bin/ folder of this repo may help)
 
+This script will again take a long time, but afterwards, the most important tables can again be ingested in the postgresdb:
 
+```sql
+CREATE TABLE tablename
+( columns and types );
+```
+
+```sql
+COPY tablename FROM 'foo/bar.csv' DELIMITER ',' CSV;
+```
 
 
 
