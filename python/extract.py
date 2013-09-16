@@ -12,6 +12,7 @@ from constants.extensions import CSV
 
 import sys
 import parser
+from lambert import Belgium1972LambertProjection
 
 straatnm_dbf = sys.argv[1] + 'straatnm.dbf'
 huisnr_dbf = sys.argv[1] + 'huisnr.dbf'
@@ -21,6 +22,10 @@ gem_dbf = sys.argv[1] + 'gem.dbf'
 tobjhnr_dbf = sys.argv[1] + 'tobjhnr.dbf'
 terrobj_dbf = sys.argv[1] + 'terrobj.dbf'
 
+do_terrobj = 1
+do_tobjhnr = 1
+do_huisnr = 1
+
 postal_code = 0
 if(len(sys.argv) > 2):
     postal_code = int(sys.argv[2])
@@ -29,6 +34,7 @@ print 'Filtering on postalcode: ' + str(postal_code)
 
 # parse & index pkancode
 huisnr_dic = dict()
+pkancode_set = set()
 
 print 'Extracting pkancode'
 db = Dbf()
@@ -48,68 +54,72 @@ for i in range(0, record_count):
     if(pkancode == postal_code or postal_code is 0):
         huisnr_dic[huisnr_id] = dict()
         huisnr_dic[huisnr_id]['PKANCODE'] = pkancode
+        pkancode_set.add(pkancode)
 
 print ''
 
 # parse & index tobjhnr
-print 'Extracting tobjhnr'
-terrobj_to_huirnr_id = dict()
-db = Dbf()
-db.openFile(tobjhnr_dbf, readOnly = 1)
-record_count = db.recordCount()
+if(do_tobjhnr):
+    print 'Extracting tobjhnr'
+    terrobj_to_huirnr_id = dict()
+    db = Dbf()
+    db.openFile(tobjhnr_dbf, readOnly = 1)
+    record_count = db.recordCount()
 
-for i in range(0, record_count):
-    rec = db[i]
+    for i in range(0, record_count):
+        rec = db[i]
     
-    if((i) % (record_count / 50) is 0 and not i is 0):
-        sys.stdout.write('.')
-        sys.stdout.flush()
+        if((i) % (record_count / 50) is 0 and not i is 0):
+            sys.stdout.write('.')
+            sys.stdout.flush()
     
-    huisnr_id = rec['HUISNRID']
-    if(huisnr_id in huisnr_dic):
-        terrobj_to_huirnr_id[rec['TERROBJID']] = huisnr_id
+        huisnr_id = rec['HUISNRID']
+        if(huisnr_id in huisnr_dic):
+            terrobj_to_huirnr_id[rec['TERROBJID']] = huisnr_id
 
-print ''
+    print ''
 
 # parse & index terrobj
-print 'Extracting terrobj'
-db = Dbf()
-db.openFile(terrobj_dbf, readOnly = 1)
-record_count = db.recordCount()
+if(do_terrobj):
+    print 'Extracting terrobj'
+    db = Dbf()
+    db.openFile(terrobj_dbf, readOnly = 1)
+    record_count = db.recordCount()
 
-for i in range(0, record_count):
-    rec = db[i]
+    for i in range(0, record_count):
+        rec = db[i]
     
-    if((i) % (record_count / 50) is 0 and not i is 0):
-        sys.stdout.write('.')
-        sys.stdout.flush()
+        if((i) % (record_count / 50) is 0 and not i is 0):
+            sys.stdout.write('.')
+            sys.stdout.flush()
     
-    terrobj_id = rec['ID']
-    if(terrobj_id in terrobj_to_huirnr_id):
-        huisnr_id = terrobj_to_huirnr_id[terrobj_id]
-        huisnr_dic[huisnr_id]['X'] = rec['X']
-        huisnr_dic[huisnr_id]['Y'] = rec['Y']
-print ''
+        terrobj_id = rec['ID']
+        if(terrobj_id in terrobj_to_huirnr_id):
+            huisnr_id = terrobj_to_huirnr_id[terrobj_id]
+            huisnr_dic[huisnr_id]['X'] = rec['X']
+            huisnr_dic[huisnr_id]['Y'] = rec['Y']
+    print ''
 
 # parse & index huisnr
-print 'Extracting huisnr'
-db = Dbf()
-db.openFile(huisnr_dbf, readOnly = 1)
-record_count = db.recordCount()
+if(do_huisnr):
+    print 'Extracting huisnr'
+    db = Dbf()
+    db.openFile(huisnr_dbf, readOnly = 1)
+    record_count = db.recordCount()
 
-for i in range(0, record_count):
-    rec = db[i]
+    for i in range(0, record_count):
+        rec = db[i]
     
-    if((i) % (record_count / 50) is 0 and not i is 0):
-        sys.stdout.write('.')
-        sys.stdout.flush()
+        if((i) % (record_count / 50) is 0 and not i is 0):
+            sys.stdout.write('.')
+            sys.stdout.flush()
 
-    huisnr_id = rec['ID']
-    if(huisnr_id in huisnr_dic):
-        huisnr_dic[huisnr_id]['STRAATNMID'] = rec['STRAATNMID']
-        huisnr_dic[huisnr_id]['HUISNR'] = rec['HUISNR']
+        huisnr_id = rec['ID']
+        if(huisnr_id in huisnr_dic):
+            huisnr_dic[huisnr_id]['STRAATNMID'] = rec['STRAATNMID']
+            huisnr_dic[huisnr_id]['HUISNR'] = rec['HUISNR']
 
-print ''
+    print ''
 
 # parse & index straatnm
 print 'Extracting straatnm:'
@@ -191,7 +201,7 @@ for (gemnm_id, gemnm_fields) in gemnm_dic.items():
 del gemnm_dic
 del gem_dic
 
-
+projection = Belgium1972LambertProjection()
 
 for (huisnr_id, huisnr_fields) in huisnr_dic.items():
     niscode = huisnr_fields['NISGEMCODE']
@@ -200,5 +210,55 @@ for (huisnr_id, huisnr_fields) in huisnr_dic.items():
     huisnr_fields['COMMUNE_FR'] = gemnm_lang_dic[niscode]['NAME_FR']
     huisnr_fields['COMMUNE_DE'] = gemnm_lang_dic[niscode]['NAME_DE']
 
+    # convert to lat/lon
+    if('X' in huisnr_fields):
+        coordinates = projection.to_wgs84(huisnr_fields['X'], huisnr_fields['Y'])
+    
+        huisnr_fields['LAT'] = coordinates[0]
+        huisnr_fields['LON'] = coordinates[1]
+    else:
+        huisnr_fields['LAT'] = ''
+        huisnr_fields['LON'] = ''
+
+fields = [ 'COMMUNE_NL', 'COMMUNE_FR', 'COMMUNE_DE', 'PKANCODE', 'STREET_NL', 'STREET_FR', 'STREET_DE', 'HUISNR', 'LAT', 'LON']
+
+output = open('crab.csv', 'w')
+rec_str = ''
+for field in fields:
+    rec_str += field + ','
+output.write(rec_str[:-1] + "\n")
+            
 for (huisnr_id, huisnr_fields) in huisnr_dic.items():
-    print huisnr_fields
+    rec_str = ''
+    for field in fields:
+        value = ''
+        if(field in huisnr_fields):
+            rec_str += str(huisnr_fields[field]) + ','
+        else:
+            rec_str += ','
+    output.write(rec_str[:-1] + "\n")
+output.close()
+
+for postalcode in pkancode_set:
+    output = open(str(postalcode) + '.csv', 'w')
+    rec_str = ''
+    for field in fields:
+        rec_str += field + ','
+    output.write(rec_str[:-1] + "\n")
+
+    for (huisnr_id, huisnr_fields) in huisnr_dic.items():
+        rec_str = ''
+        if(huisnr_fields['PKANCODE'] == postalcode):
+            for field in fields:
+                value = ''
+                if(field in huisnr_fields):
+                    rec_str += str(huisnr_fields[field]) + ','
+                else:
+                    rec_str += ','
+            output.write(rec_str[:-1] + "\n")
+    output.close()
+
+
+
+
+
