@@ -1,0 +1,12 @@
+Usage: python extract.py {path_to_dbf_files} {optional: postalcode to filter on)
+
+ex: python extract.py /Users/xivk/dev/git/crab-tools/CRAB_adresposities/dBASE/ 2275
+
+This will create one (huge) csv file in your current folder {crab.csv} containing only the addressing information and their corresponding locations (lat/lon) already transformed from the lambert82 projection from AGIV.
+
+
+Also one file is written per postal code {XXXX.csv} to make the information more managable and to get you started quickly. 
+
+Current problems: some encodings of the street names!
+
+The lambert module can be used to convert x-y coordinates into lat/lon.

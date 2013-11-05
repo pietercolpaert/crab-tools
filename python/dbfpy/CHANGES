@@ -1,0 +1,9 @@
+took uver development 2000-10-06 Hans Fiby
+
+changed: 2000-10-06 Hans Fiby
+ * added dbfnew.py
+ * fixed decimal points
+
+changes: 2001-02-07 Hans Fiby
+ * read long integers as long
+ * add this CHANGES File

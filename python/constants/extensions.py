@@ -1,0 +1,2 @@
+DBF = ".dbf"
+CSV = ".csv"
